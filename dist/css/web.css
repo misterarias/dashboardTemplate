@@ -65,12 +65,17 @@ body {
 .nav-sidebar > .active > a:hover,
 .nav-sidebar > .active > a:focus {
     color: #fff;
-    background-color: #3c763d;; /* #428bca; */
+    background-color: #a7cae6 ; /* #428bca; */
 }
 
 /*
  * Main content
  */
+.navbar {
+
+    background:  url('../images/cabecera.png')right  no-repeat  #008ac9  ;
+}
+
 .main {
     padding: 20px;
 }

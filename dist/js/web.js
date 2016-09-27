@@ -37,6 +37,12 @@ var errorTxt = "Error", okTxt = "OK";
 var control = {
     ndx: {}, allGroup: {}, filters: {},
     scrolling: false, enableScrolling: false,
+    maps: {
+        baseTile: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+        defaultLat: 40.45,
+        defaultLon: -3.65,
+        defaultZoom: 6
+    },
     slider: {
         min: 0, max: 1e8
     },
@@ -126,6 +132,7 @@ var setupSlider = function () {
             }
         })
         .on('slideStop', function (slideEvt) {
+            console.log("slideStpo");
             onFilter("importe", slideEvt.value);
         })
     ;
@@ -375,7 +382,7 @@ var loadJsonDataset = function (dataset, successCallback) {
 };
 
 var loadCsvDataset = function (dataset, successCallback) {
-    var fileName = "data/" + dataset + "_clean.csv";
+    var fileName = "data/" + dataset + ".csv";
     var formatter = function (row) {
         row.HAS_ERROR = (row.HAS_ERROR == "TRUE");
         row.IMPORTE_RECLA_UNIQ = parseFloat(row.IMPORTE_RECLA_UNIQ);

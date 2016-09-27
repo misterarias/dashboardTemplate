@@ -17,7 +17,12 @@
 
 </head>
 <body id="viewport">
-<div id="appLoading"></div>
+<div id="appLoading">
+    <div class="center ">
+        <h3>Cargando datos de procedimientos, espere unos instantes...</h3>
+        <h4 id="progress">0 %</h4>
+    </div>
+</div>
 
 <script type="text/javascript">
     // Environment variables
@@ -71,8 +76,9 @@
         <!-- Principal -->
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
             <div class="row">
+                <h4 class="sub-header">Seleccione fase para visualizar detalles</h4>
+
                 <div class="col-md-12">
-                    <h4 class="sub-header">Seleccione fase para visualizar detalles</h4>
                     <div class="row ">
                         <div class="col-md-3 fases">
                             <div class="panel panel-default" id="panel-demandas">
@@ -90,12 +96,12 @@
                                                 <td><span class="total_items"></span></td>
                                             </tr>
                                             <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
                                                 <td class="label_importe_total"></td>
                                                 <td><span class="total"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label_total_errors"></td>
+                                                <td><span class="error_items"></span></td>
                                             </tr>
                                             <tr>
                                                 <td class="label_importe_perdido"></td>
@@ -123,12 +129,12 @@
                                                 <td><span class="total_items"></span></td>
                                             </tr>
                                             <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
                                                 <td class="label_importe_total"></td>
                                                 <td><span class="total"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label_total_errors"></td>
+                                                <td><span class="error_items"></span></td>
                                             </tr>
                                             <tr>
                                                 <td class="label_importe_perdido"></td>
@@ -156,12 +162,12 @@
                                                 <td><span class="total_items"></span></td>
                                             </tr>
                                             <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
                                                 <td class="label_importe_total"></td>
                                                 <td><span class="total"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label_total_errors"></td>
+                                                <td><span class="error_items"></span></td>
                                             </tr>
                                             <tr>
                                                 <td class="label_importe_perdido"></td>
@@ -190,12 +196,12 @@
                                                 <td><span class="total_items"></span></td>
                                             </tr>
                                             <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
                                                 <td class="label_importe_total"></td>
                                                 <td><span class="total"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label_total_errors"></td>
+                                                <td><span class="error_items"></span></td>
                                             </tr>
                                             <tr>
                                                 <td class="label_importe_perdido"></td>
@@ -211,7 +217,7 @@
                 </div>
                 <div class="hidden col-md-3 stats">
                     <!-- Detalles -->
-                    <h3 class="sub-header">Detalles</h3>
+                    <h4 class="sub-header">Detalles</h4>
                     <div class="col-md-12 ">
                         <div id="pieChart"></div>
 
@@ -219,7 +225,7 @@
                 </div>
             </div>
             <div class="row" id="details-table">
-                <h3 class="sub-header">Detalles</h3>
+                <h4 class="sub-header">Detalles</h4>
                 <div class="table-responsive">
                     <table id='dc-data-table' class="table table-striped"></table>
                     <div id="paging">

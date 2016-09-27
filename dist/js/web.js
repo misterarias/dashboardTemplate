@@ -1,8 +1,5 @@
 $(window).load(function () {
 
-    // Table starts off-loaded
-    $(control.dataTable.anchor).hide();
-
     $('#viewport').css('display', 'block');
 
     // Events subscriptions
@@ -18,6 +15,9 @@ $(window).load(function () {
 var finishLoading = function () {
     // Animate loader off screen
     $('#appLoading').fadeOut('slow');
+
+    // Show table for first dataset, to have something XXX do better
+    $('#panel-demandas').find('.panel-heading').click();
 };
 
 var tableColumn = function (label, format) {
@@ -32,10 +32,11 @@ var commonColumns = [
     }), tableColumn("Importe reclamado", function (d) {
         return formatNumber(d.IMPORTE_RECLA_UNIQ);
     })];
+var errorTxt = "Error", okTxt = "OK";
 
 var control = {
-    ndx: {},
-    scrolling: false,
+    ndx: {}, allGroup: {}, filters: {},
+    scrolling: false, enableScrolling: false,
     slider: {
         min: 0, max: 1e8
     },
@@ -47,8 +48,8 @@ var control = {
         firstColumn: [tableColumn("#ID", function (d) {
             return d.ID_PROCESO
         })],
-        lastColumn: [tableColumn("Error?", function (d) {
-            return (d.HAS_ERROR) ? 'Si' : 'No'
+        lastColumn: [tableColumn("Estado", function (d) {
+            return (d.HAS_ERROR) ? errorTxt : okTxt;
         })],
         datasetColumns: {
             "adjudicaciones": commonColumns.concat([]),
@@ -94,15 +95,21 @@ var control = {
     chartInfo: [],
     limits: {
         importe: -1
-    }
-
+    },
+    staticTotals: {},
+    showErrorValues: false
 };
 
 var renderLabels = function () {
+    $('.label_importe_total').text("Reclamado(€)");
     $('.label_total_items').text("Registros");
-    $('.label_total_errors').text("Registros c/errores");
-    $('.label_importe_total').text("Importe reclamado(€)");
-    $('.label_importe_perdido').text("Reclamado c/error(€)");
+    if (control.showErrorValues) {
+        $('.label_total_errors').text("Registros c/error");
+        $('.label_importe_perdido').text("Reclamado c/error(€)");
+    } else {
+        $('.label_total_errors').parent().hide();
+        $('.label_importe_perdido').parent().hide();
+    }
 };
 
 var setupSlider = function () {
@@ -136,25 +143,30 @@ var formatNumber = function (number) {
 };
 
 var onFilter = function (field, newLimit) {
+
     control.limits[field] = parseInt(newLimit);
-    drawData();
+    $.each(control.dataTable.datasetColumns, function (type, columns) {
+        var filteredDataset = getFilteredDataset(control.data[type]);
+        drawPieChart(filteredDataset, type);
+    });
 
     if (control.dataTable.currentDatasetName) {
         var currentDataset = control.data[control.dataTable.currentDatasetName];
-        drawDataTable(getFilteredDataset(currentDataset));
+        drawDataTable(getFilteredDataset(currentDataset), control.dataTable.currentDatasetName);
     }
 };
 
-var drawData = function () {
-    $.each(this.control.data, function (type, data) {
-        var filteredDataset = getFilteredDataset(data);
+var drawData = function (data, type) {
+    var filteredDataset = getFilteredDataset(data);
+    drawPieChart(filteredDataset, type);
 
-        drawPieChart(filteredDataset, type);
-        $('#panel-' + type + ' .panel-heading').on('click', function () {
+    $('#panel-' + type + ' .panel-heading').on('click', function () {
+        if (control.dataTable.currentDatasetName != type) {
+            control.dataTable.current = undefined;
             control.dataTable.currentDatasetName = type;
             showDataTable();
-            drawDataTable(filteredDataset);
-        });
+            drawDataTable(filteredDataset, type);
+        }
     });
 };
 
@@ -170,67 +182,92 @@ var getFilteredDataset = function (rawData) {
 
 var drawPieChart = function (data, type) {
 
-    var importeTotal = 0, importePerdido = 0,
-        totalClientes = data.length,
-        totalErrores = 0, totalNan = 0
-        ;
-    data.forEach(function (d) {
-        if (!isNaN(d.IMPORTE_RECLA_UNIQ)) {
+    if (control.showErrorValues) {
+        var importeTotal = 0, importePerdido = 0,
+            totalClientes = data.length,
+            totalErrores = 0
+            ;
+        data.forEach(function (d) {
             d.IMPORTE_RECLA_UNIQ = parseInt(d.IMPORTE_RECLA_UNIQ);
             importeTotal += d.IMPORTE_RECLA_UNIQ;
             importePerdido += (d.HAS_ERROR) ? d.IMPORTE_RECLA_UNIQ : 0;
-        } else {
-            totalNan += 1
+            totalErrores += (d.HAS_ERROR) ? 1 : 0;
+        });
+        control.staticTotals[type] = {
+            totalClientes: totalClientes,
+            totalErrors: totalErrores,
+            importeTotal: importeTotal,
+            importeErrores: importePerdido
         }
-        totalErrores += (d.HAS_ERROR) ? 1 : 0;
-    });
-
-    var summary = $('#' + type + 'Summary');
-    summary.find('span.total_items').text(formatNumber(totalClientes));
-    summary.find('span.error_items').text(formatNumber(totalErrores));
-    summary.find('span.total').text(formatNumber(importeTotal));
-    summary.find('span.error').text(formatNumber(importePerdido));
+    }
 
     if (!control.ndx.hasOwnProperty(type)) {
         control.ndx[type] = updatingCrossfilter(data, []); // TODO: Add dimensions
+        var errorDimension = control.ndx[type].dimension(function (v) {
+            return v.HAS_ERROR == true;
+        });
+        var errorGroup = errorDimension.group();
+
+        var colorScale = d3.scale.ordinal()
+            .domain([false, true])
+            .range(['#3c763d', '#a94442'])
+            ;
+
+        control.allGroup[type] = control.ndx[type].groupAll().reduce(
+            function (p, v) {
+                p.items += 1;
+                p.importe += v.IMPORTE_RECLA_UNIQ;
+                return p;
+            },
+            function (p, v) {
+                p.items -= 1;
+                p.importe -= v.IMPORTE_RECLA_UNIQ;
+                return p;
+            },
+            function () {
+                return {items: 0, importe: 0};
+            }
+        );
+
+        var pieChart = dc.pieChart("#" + type + "PieChart")
+            .dimension(errorDimension)
+            .group(errorGroup)
+            .title(function(d) {}, false)
+            .colors(function (HAS_ERROR) {
+                return colorScale(HAS_ERROR == true);
+            })
+            .on('pretransition', function (chart) {
+                chart.selectAll('text.pie-slice').text(function (d) {
+                    var text = (!d.data.key) ? okTxt : errorTxt;
+                    return text + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) + '%';
+                })
+            })
+            .on("filtered", function (d) {
+                updateCounters(type);
+            })
+            .render();
+        control.chartInfo.push(pieChart);
+
     } else {
         control.ndx[type].replace(data);
     }
 
-    var errorDimension = control.ndx[type].dimension(function (v) {
-        return v.HAS_ERROR == true;
-    });
-    var errorGroup = errorDimension.group();
+    updateCounters(type);
+};
 
-    var errorTxt = "Error", okTxt = "OK";
-    var colorScale = d3.scale.ordinal()
-        .domain([false, true])
-        .range(['#3c763d', '#a94442'])
-        ;
-    var pieChart = dc.pieChart("#" + type + "PieChart")
-        .dimension(errorDimension)
-        .group(errorGroup)
-        .title(function (v) {
-            if (v.key) {
-                return "Resoluciones erróneas: " + totalErrores;
-            } else {
-                return "Resoluciones con éxito: " + totalClientes;
-            }
-        })
-        .colors(function (HAS_ERROR) {
-            return colorScale(HAS_ERROR == true);
-        })
-        .on('pretransition', function (chart) {
-            chart.selectAll('text.pie-slice').text(function (d) {
-                var text = (!d.data.key) ? okTxt : errorTxt;
-                return text + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) + '%';
-            })
-        })
-        .render()
-        ;
-    control.chartInfo.push(pieChart);
+var updateCounters = function (type) {
+    var summary = $('#' + type + 'Summary');
 
-    // resize();
+    if (control.showErrorValues) {
+        summary.find('span.total_items').text(formatNumber(control.staticTotals[type].totalClientes));
+        summary.find('span.total').text(formatNumber(control.staticTotals[type].importeTotal));
+        summary.find('span.error_items').text(formatNumber(control.staticTotals[type].totalErrors));
+        summary.find('span.error').text(formatNumber(control.staticTotals[type].importeErrores));
+    } else {
+        summary.find('span.total_items').text(formatNumber(control.allGroup[type].value().items));
+        summary.find('span.total').text(formatNumber(control.allGroup[type].value().importe));
+    }
+    dc.redrawAll();
 };
 
 var showDataTable = function () {
@@ -239,35 +276,36 @@ var showDataTable = function () {
     scrollTo(table);
 };
 
-var drawDataTable = function (data) {
+var drawDataTable = function (data, type) {
 
-    var ndx = crossfilter(data);
-    var columns = control.dataTable.firstColumn
-        .concat(control.dataTable.datasetColumns[control.dataTable.currentDatasetName])
-        .concat(control.dataTable.lastColumn)
-        ;
-    control.dataTable.current = dc.dataTable('#dc-data-table')
-        .dimension(ndx.dimension(function (x) {
-            return x;
-        }))
-        .group(function (d) {
-            return ''; // cheap trick: group by nothing so the 'striped' effect kicks-in
-        })
-        .showGroups(false) // removes the grouping line at the top
-        .size(Infinity) // So we can use pagination
-        .columns(columns)
-        .sortBy(function (d) {
-            return d.FECHA_INICIO;
-        })
-    ;
+    if (!control.dataTable.current) {
+        var columns = control.dataTable.firstColumn
+            .concat(control.dataTable.datasetColumns[control.dataTable.currentDatasetName])
+            .concat(control.dataTable.lastColumn)
+            ;
 
-    control.dataTable.size = data.length; //ndx.size();
+        control.dataTable.current = dc.dataTable('#dc-data-table')
+            .dimension(control.ndx[type].dimension(function (x) {
+                return x.HAS_ERROR == true;
+            }))
+            .group(function (d) {
+                return ''; // cheap trick: group by nothing so the 'striped' effect kicks-in
+            })
+            .showGroups(false) // removes the grouping line at the top
+            .size(Infinity) // So we can use pagination
+            .columns(columns)
+            .sortBy(function (d) {
+                return d.FECHA_INICIO;
+            });
+    }
+    control.dataTable.size = control.allGroup[type].value().items;
     control.dataTable.offset = 0; // reset
     update();
+    //dc.redrawAll();
 };
 
 var scrollTo = function (element) {
-    if (!control.scrolling) {
+    if (control.enableScrolling && !control.scrolling) {
         control.scrolling = true;
         var pos = element.offset();
         $("html, body").animate({scrollTop: (pos.top - 40)}, 600, "swing", function () {
@@ -277,7 +315,6 @@ var scrollTo = function (element) {
 };
 
 var resize = function () {
-    console.log("RESIZE")
     var width = $('#panel-requerimientos').width(); // lame..
     for (var i in control.chartInfo) {
         var chart = control.chartInfo[i];
@@ -289,45 +326,65 @@ var resize = function () {
         if (chart.hasOwnProperty("redraw")) {
             chart.redraw();
         }
-        chart.render();
     }
     dc.redrawAll();
 };
 
+var updateProgress = function (step, totalCount) {
+    step += 0.5;
+    $('#progress').text((100 * step / totalCount) + " %");
+    return step;
+};
+
 var loadData = function () {
     var me = this;
-    var dataSetsPending = Object.keys(control.dataTable.datasetColumns).length;
-    $.each(control.dataTable.datasetColumns, function (dataset, columns) {
-        var data = {};
-        $.ajax({
-            url: "data/" + dataset + ".json",
-            async: true,
-            success: function (jsonData) {
-                data = $.parseJSON(jsonData);
-                me.control.data[dataset] = data;
+    var datasetCount = Object.keys(control.dataTable.datasetColumns).length,
+        datasetsFinished = 0;
+    var successCallback = function (data, dataType) {
+        me.control.data[dataType] = data;
 
-                me.control.slider.max = Math.max(
-                    d3.max(data, function (d) {
-                        return parseInt(d.IMPORTE_RECLA_UNIQ);
-                    }),
-                    me.control.slider.max
-                );
-                me.control.slider.min = Math.min(
-                    d3.min(data, function (d) {
-                        return parseInt(d.IMPORTE_RECLA_UNIQ);
-                    }),
-                    me.control.slider.min
-                );
-            },
-            dataType: "text",
-            complete: function () {
-                drawData();
-                if (--dataSetsPending == 0) {
-                    finishLoading();
-                }
-            }
-        });
+        datasetsFinished = updateProgress(datasetsFinished, datasetCount);
+        drawData(data, dataType);
+
+        datasetsFinished = updateProgress(datasetsFinished, datasetCount);
+        if (datasetsFinished == datasetCount) {
+            resize();
+            finishLoading();
+        }
+    };
+    $.each(control.dataTable.datasetColumns, function (dataset, columns) {
+        loadCsvDataset(dataset, successCallback);
+//        loadJsonDataset(dataset, successCallback);
     });
+};
+
+// Currently unused, JSON is more flexible but bigger
+var loadJsonDataset = function (dataset, successCallback) {
+    var data = {};
+    $.ajax({
+        url: "data/" + dataset + ".json",
+        async: true,
+        success: function (jsonData) {
+            data = $.parseJSON(jsonData);
+        },
+        complete: function () {
+            successCallback(data, dataset);
+        },
+        dataType: "text"
+    });
+};
+
+var loadCsvDataset = function (dataset, successCallback) {
+    var fileName = "data/" + dataset + "_clean.csv";
+    var formatter = function (row) {
+        row.HAS_ERROR = (row.HAS_ERROR == "TRUE");
+        row.IMPORTE_RECLA_UNIQ = parseFloat(row.IMPORTE_RECLA_UNIQ);
+        return row;
+    };
+    var callback = function (error, data) {
+        successCallback(data, dataset);
+    };
+    d3.csv(fileName, formatter, callback);
 };
 
 var loadMap = function (params) {

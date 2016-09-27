@@ -236,6 +236,7 @@ var drawPieChart = function (data, type) {
             }
         );
 
+
         var pieChart = dc.pieChart("#" + type + "PieChart")
             .dimension(errorDimension)
             .group(errorGroup)
@@ -267,12 +268,13 @@ var updateCounters = function (type) {
 
     if (control.showErrorValues) {
         summary.find('span.total_items').text(formatNumber(control.staticTotals[type].totalClientes));
-        summary.find('span.total').text(formatNumber(control.staticTotals[type].importeTotal));
+        summary.find('span.total_importe').text(formatNumber(control.staticTotals[type].importeTotal));
         summary.find('span.error_items').text(formatNumber(control.staticTotals[type].totalErrors));
         summary.find('span.error').text(formatNumber(control.staticTotals[type].importeErrores));
     } else {
+        console.log(control.allGroup[type]);
         summary.find('span.total_items').text(formatNumber(control.allGroup[type].value().items));
-        summary.find('span.total').text(formatNumber(control.allGroup[type].value().importe));
+        summary.find('span.total_importe').text(formatNumber(control.allGroup[type].value().importe));
     }
     dc.redrawAll();
 };
@@ -385,7 +387,10 @@ var loadCsvDataset = function (dataset, successCallback) {
     var fileName = "data/" + dataset + ".csv";
     var formatter = function (row) {
         row.HAS_ERROR = (row.HAS_ERROR == "TRUE");
-        row.IMPORTE_RECLA_UNIQ = parseFloat(row.IMPORTE_RECLA_UNIQ);
+        if (!isNaN(row.IMPORTE_RECLA_UNIQ))
+            row.IMPORTE_RECLA_UNIQ = +row.IMPORTE_RECLA_UNIQ ;
+        else
+            row.IMPORTE_RECLA_UNIQ = 0;
         return row;
     };
     var callback = function (error, data) {

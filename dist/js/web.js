@@ -44,7 +44,7 @@ var control = {
         defaultZoom: 6
     },
     slider: {
-        min: 0, max: 1e8
+        min: 0, max: 1e6, stepNumber: 20
     },
     dataTable: {
         pagination: 12,
@@ -122,31 +122,36 @@ var setupSlider = function () {
 
     $("input#slider").slider(
         {
-            min: this.control.slider.min,
-            max: this.control.slider.max,
-            scale: 'logarithmic',
-            //      orientation: 'vertical', tooltip_position: 'right',
-            //      reversed: true,
+            min: control.slider.min, max: control.slider.max,
+            value: control.slider.min,
+            ticks_snap_bounds: 20,
+            ticks: [control.slider.min, control.slider.max],
+            tooltip: 'always',
+            scale: 'linear', //'logarithmic',
+            tooltip_position: 'bottom',
+            step: Math.floor(control.slider.max / control.slider.stepNumber),
             formatter: function (value) {
-                return 'Desde ' + formatNumber(value);
+                if (value > control.slider.min)
+                    return 'Al menos ' + formatNumber(value) + '€';
+                else
+                    return 'Todos';
             }
         })
         .on('slideStop', function (slideEvt) {
-            console.log("slideStpo");
             onFilter("importe", slideEvt.value);
         })
     ;
-    $(".slider").attr("style", "margin: 0; width: 88%;");
+    $(".slider").attr("style", "margin-left: 10px; width: 88%;");
 };
 
 var formatNumber = function (number) {
-    if (number) {
+    if (number > 0) {
         return number.toLocaleString().replace(/,/g, 'PLACEHOLDER')
             .replace(/\./g, ',')
             .replace(/PLACEHOLDER/g, '.')
             ;// + " €";
-    }
-    return "";
+    } else
+        return "0";
 };
 
 var onFilter = function (field, newLimit) {
@@ -155,12 +160,11 @@ var onFilter = function (field, newLimit) {
     $.each(control.dataTable.datasetColumns, function (type, columns) {
         var filteredDataset = getFilteredDataset(control.data[type]);
         drawPieChart(filteredDataset, type);
-    });
 
-    if (control.dataTable.currentDatasetName) {
-        var currentDataset = control.data[control.dataTable.currentDatasetName];
-        drawDataTable(getFilteredDataset(currentDataset), control.dataTable.currentDatasetName);
-    }
+        if (control.dataTable.currentDatasetName == type) {
+            drawDataTable(filteredDataset, type);
+        }
+    });
 };
 
 var drawData = function (data, type) {
@@ -181,7 +185,7 @@ var getFilteredDataset = function (rawData) {
     var data = rawData;
     if (control.limits.importe >= 0) {
         data = rawData.filter(function (d) {
-            return (parseInt(d.IMPORTE_RECLA_UNIQ) > control.limits.importe);
+            return (d.IMPORTE_RECLA_UNIQ >= control.limits.importe);
         });
     }
     return data;
@@ -240,7 +244,8 @@ var drawPieChart = function (data, type) {
         var pieChart = dc.pieChart("#" + type + "PieChart")
             .dimension(errorDimension)
             .group(errorGroup)
-            .title(function(d) {}, false)
+            .title(function (d) {
+            }, false)
             .colors(function (HAS_ERROR) {
                 return colorScale(HAS_ERROR == true);
             })
@@ -272,7 +277,6 @@ var updateCounters = function (type) {
         summary.find('span.error_items').text(formatNumber(control.staticTotals[type].totalErrors));
         summary.find('span.error').text(formatNumber(control.staticTotals[type].importeErrores));
     } else {
-        console.log(control.allGroup[type]);
         summary.find('span.total_items').text(formatNumber(control.allGroup[type].value().items));
         summary.find('span.total_importe').text(formatNumber(control.allGroup[type].value().importe));
     }
@@ -388,7 +392,7 @@ var loadCsvDataset = function (dataset, successCallback) {
     var formatter = function (row) {
         row.HAS_ERROR = (row.HAS_ERROR == "TRUE");
         if (!isNaN(row.IMPORTE_RECLA_UNIQ))
-            row.IMPORTE_RECLA_UNIQ = +row.IMPORTE_RECLA_UNIQ ;
+            row.IMPORTE_RECLA_UNIQ = +row.IMPORTE_RECLA_UNIQ;
         else
             row.IMPORTE_RECLA_UNIQ = 0;
         return row;

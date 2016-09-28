@@ -17,7 +17,7 @@ var finishLoading = function () {
     $('#appLoading').fadeOut('slow');
 
     // Show table for first dataset, to have something XXX do better
-    $('#panel-demandas').find('.panel-heading').click();
+    $('#panel-demandas').find('.details').click();
 };
 
 var tableColumn = function (label, format) {
@@ -67,7 +67,7 @@ var control = {
                 }), tableColumn("# Juzgado", function (d) {
                     return d.ID_JUZGADO;
                 }), tableColumn("Costas", function (d) {
-                    return formatNumber(d.COSTAS);
+                    return d.COSTAS.replace(',', '.').toLocaleString() ;
                 })
             ].concat(commonColumns),
             "requerimientos": commonColumns.concat([
@@ -102,20 +102,17 @@ var control = {
     limits: {
         importe: -1
     },
-    staticTotals: {},
-    showErrorValues: false
+    staticTotals: {}
 };
 
 var renderLabels = function () {
     $('.label_importe_total').text("Reclamado(€)");
     $('.label_total_items').text("Registros");
-    if (control.showErrorValues) {
-        $('.label_total_errors').text("Registros c/error");
-        $('.label_importe_perdido').text("Reclamado c/error(€)");
-    } else {
-        $('.label_total_errors').parent().hide();
-        $('.label_importe_perdido').parent().hide();
-    }
+
+    $('#panel-demandas').find('.sub-header').text("Demandas");
+    $('#panel-requerimientos').find('.sub-header').text("Requerimientos");
+    $('#panel-subastas').find('.sub-header').text("Subasta");
+    $('#panel-adjudicaciones').find('.sub-header').text("Adjudicaciones");
 };
 
 var setupSlider = function () {
@@ -171,7 +168,12 @@ var drawData = function (data, type) {
     var filteredDataset = getFilteredDataset(data);
     drawPieChart(filteredDataset, type);
 
-    $('#panel-' + type + ' .panel-heading').on('click', function () {
+    $('#panel-' + type).find('.details').on('click', function () {
+        var elem = $(this).parent() ;
+        
+        $('.selected').removeClass("selected");
+        elem.addClass("selected");
+
         if (control.dataTable.currentDatasetName != type) {
             control.dataTable.current = undefined;
             control.dataTable.currentDatasetName = type;
@@ -193,25 +195,6 @@ var getFilteredDataset = function (rawData) {
 
 var drawPieChart = function (data, type) {
 
-    if (control.showErrorValues) {
-        var importeTotal = 0, importePerdido = 0,
-            totalClientes = data.length,
-            totalErrores = 0
-            ;
-        data.forEach(function (d) {
-            d.IMPORTE_RECLA_UNIQ = parseInt(d.IMPORTE_RECLA_UNIQ);
-            importeTotal += d.IMPORTE_RECLA_UNIQ;
-            importePerdido += (d.HAS_ERROR) ? d.IMPORTE_RECLA_UNIQ : 0;
-            totalErrores += (d.HAS_ERROR) ? 1 : 0;
-        });
-        control.staticTotals[type] = {
-            totalClientes: totalClientes,
-            totalErrors: totalErrores,
-            importeTotal: importeTotal,
-            importeErrores: importePerdido
-        }
-    }
-
     if (!control.ndx.hasOwnProperty(type)) {
         control.ndx[type] = updatingCrossfilter(data, []); // TODO: Add dimensions
         var errorDimension = control.ndx[type].dimension(function (v) {
@@ -221,7 +204,7 @@ var drawPieChart = function (data, type) {
 
         var colorScale = d3.scale.ordinal()
             .domain([false, true])
-            .range(['#3c763d', '#a94442'])
+            .range(['#1eb958', '#bf0223'])
             ;
 
         control.allGroup[type] = control.ndx[type].groupAll().reduce(
@@ -240,8 +223,7 @@ var drawPieChart = function (data, type) {
             }
         );
 
-
-        var pieChart = dc.pieChart("#" + type + "PieChart")
+        var pieChart = dc.pieChart("#panel-" + type + " .pie-chart")
             .dimension(errorDimension)
             .group(errorGroup)
             .title(function (d) {
@@ -269,17 +251,10 @@ var drawPieChart = function (data, type) {
 };
 
 var updateCounters = function (type) {
-    var summary = $('#' + type + 'Summary');
+    var summary = $('#panel-' + type).find('table.summary');
 
-    if (control.showErrorValues) {
-        summary.find('span.total_items').text(formatNumber(control.staticTotals[type].totalClientes));
-        summary.find('span.total_importe').text(formatNumber(control.staticTotals[type].importeTotal));
-        summary.find('span.error_items').text(formatNumber(control.staticTotals[type].totalErrors));
-        summary.find('span.error').text(formatNumber(control.staticTotals[type].importeErrores));
-    } else {
-        summary.find('span.total_items').text(formatNumber(control.allGroup[type].value().items));
-        summary.find('span.total_importe').text(formatNumber(control.allGroup[type].value().importe));
-    }
+    summary.find('.total_items').text(formatNumber(control.allGroup[type].value().items));
+    summary.find('.total_importe').text(formatNumber(control.allGroup[type].value().importe));
     dc.redrawAll();
 };
 

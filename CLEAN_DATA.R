@@ -29,6 +29,10 @@ for (tipo_fase in names(filenames)) {
     df <- read.csv(input.csv.file.name, sep = "|", header = TRUE, stringsAsFactors = FALSE)
     
     # Clean stuff
+    if ("COSTAS" %in% names(df)) {
+      df$COSTAS <- as.numeric(gsub(',', '.', df$COSTAS))
+    }
+    
     df$IMPORTE_RECLA[df$IMPORTE_RECLA == "" | is.na(df$IMPORTE_RECLA)] <- 0
     df$IMPORTE_RECLA_CLEAN <- as.numeric(gsub(',', '.', df$IMPORTE_RECLA))
     df$IMPORTE_RECLA_CLEAN[is.na(df$IMPORTE_RECLA_CLEAN)] <- 0
@@ -43,7 +47,7 @@ for (tipo_fase in names(filenames)) {
     ignore.rules <- c("N_IMP_INT_R67", "N_IMP_COSTAS_R68", "FEC_SOLICITADA_EPO_R19")
     # ni errores que incluyan mas del x% de los resultados
     colsums <- colSums(df.rules)
-    umbral <- 0.4 * nrow(df) # ~ 40%
+    umbral <- 0.9 * nrow(df) # ~ 90%
     remove.rules <- names(colsums[ colsums > umbral])
     
     ignore.rules <- unique(c(ignore.rules, remove.rules))

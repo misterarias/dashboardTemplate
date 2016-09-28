@@ -43,7 +43,7 @@
     <div class="row">
         <!-- Procesos -->
         <div class="col-sm-3 col-md-2 sidebar">
-            <h4 class="sub-header">Procedimiento Judicial</h4>
+            <h4 class="nav-header">Procedimiento Judicial</h4>
             <ul class="nav nav-sidebar">
                 <li class="active"><a href="#">Hipotecario<span class="sr-only">(current)</span></a></li>
                 <li><a href="#">Ejecutivo</a></li>
@@ -53,7 +53,7 @@
             </ul>
             <div class="row ">
                 <div class="col-md-12">
-                    <h4 class="sub-header">Filtros</h4>
+                    <h4 class="nav-header">Filtros</h4>
                     <div id="controls" class="">
                         <label for="slider" class="opacity-75 text-bold">Importe Reclamado</label>
                         <input class="hidden" id="slider"/>
@@ -64,154 +64,100 @@
 
         <!-- Principal -->
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <div class="row">
-                <h4 class="sub-header">Seleccione fase para visualizar detalles</h4>
-
+            <div class="row" id="charts-area">
                 <div class="col-md-12">
                     <div class="row ">
-                        <div class="col-md-3 fases">
-                            <div class="panel" id="panel-demandas">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Demanda</h3>
+                        <div class="col-md-3">
+                            <div class="row detalles-fase" id="panel-demandas">
+                                <div class="col-md-12 charts">
+                                    <div class="pie-chart"></div>
                                 </div>
-                                <div class="panel-body">
-                                    <div id="demandasPieChart"></div>
-                                    <div id="demandasRowChart"></div>
-                                    <div class="summary" id="demandasSummary">
-                                        <table class="table table-striped">
-                                            <tbody>
-                                            <tr>
-                                                <td class="label_total_items"></td>
-                                                <td><span class="total_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_total"></td>
-                                                <td><span class="total_importe"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_perdido"></td>
-                                                <td><span class="error"></span></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div class="col-md-12 details">
+                                    <h5 class="sub-header "></h5>
+                                    <table class="summary">
+                                        <tbody>
+                                        <tr>
+                                            <td class="label_total_items"></td>
+                                            <td class="total_items"></td> 
+                                        </tr>
+                                        <tr>
+                                            <td class="label_importe_total"></td>
+                                            <td class="total_importe"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="panel" id="panel-requerimientos">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Requerimientos</h3>
+                            <div class="row detalles-fase" id="panel-requerimientos">
+                                <div class="col-md-12 charts">
+                                    <div class="pie-chart"></div>
                                 </div>
-                                <div class="panel-body">
-                                    <div id="requerimientosPieChart"></div>
-                                    <div id="requerimientosRowChart"></div>
-                                    <div class="summary" id="requerimientosSummary">
-                                        <table class="table table-striped">
-                                            <tbody>
-                                            <tr>
-                                                <td class="label_total_items"></td>
-                                                <td><span class="total_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_total"></td>
-                                                <td><span class="total_importe"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_perdido"></td>
-                                                <td><span class="error"></span></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div class="col-md-12 details">
+                                    <h5 class="sub-header "></h5>
+                                    <table class="summary">
+                                        <tbody>
+                                        <tr>
+                                            <td class="label_total_items"></td>
+                                            <td class="total_items"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label_importe_total"></td>
+                                            <td class="total_importe"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="panel" id="panel-subastas">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Subasta</h3>
+                            <div class="row detalles-fase" id="panel-subastas">
+                                <div class="col-md-12 charts">
+                                    <div class="pie-chart"></div>
                                 </div>
-                                <div class="panel-body">
-                                    <div id="subastasPieChart"></div>
-                                    <div id="subastasRowChart"></div>
-                                    <div class="summary" id="subastasSummary">
-                                        <table class="table table-striped">
-                                            <tbody>
-                                            <tr>
-                                                <td class="label_total_items"></td>
-                                                <td><span class="total_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_total"></td>
-                                                <td><span class="total_importe"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_perdido"></td>
-                                                <td><span class="error"></span></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
+                                <div class="col-md-12 details">
+                                    <h5 class="sub-header "></h5>
+                                    <table class="summary">
+                                        <tbody>
+                                        <tr>
+                                            <td class="label_total_items"></td>
+                                            <td class="total_items"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label_importe_total"></td>
+                                            <td class="total_importe"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="panel" id="panel-adjudicaciones">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Adjudicaciones</h3>
+                            <div class="row detalles-fase" id="panel-adjudicaciones">
+                                <div class="col-md-12 charts">
+                                    <div class="pie-chart"></div>
                                 </div>
-                                <div class="panel-body">
-                                    <div id="adjudicacionesPieChart"></div>
-                                    <div id="adjudicacionesRowChart"></div>
-                                    <div class="summary" id="adjudicacionesSummary">
-                                        <table class="table table-striped">
-                                            <tbody>
-                                            <tr>
-                                                <td class="label_total_items"></td>
-                                                <td><span class="total_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_total"></td>
-                                                <td><span class="total_importe"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_total_errors"></td>
-                                                <td><span class="error_items"></span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="label_importe_perdido"></td>
-                                                <td><span class="error"></span></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div class="col-md-12 details">
+                                    <h5 class="sub-header "></h5>
+                                    <table class="summary">
+                                        <tbody>
+                                        <tr>
+                                            <td class="label_total_items"></td>
+                                            <td class="total_items"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label_importe_total"></td>
+                                            <td class="total_importe"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="hidden col-md-3 stats">
-                    <!-- Detalles -->
-                    <h4 class="sub-header">Detalles</h4>
-                    <div class="col-md-12 ">
-                        <div id="pieChart"></div>
-
-                    </div>
-                </div>
+                
             </div>
             <div class="row" id="details-table">
                 <h4 class="sub-header">Detalles</h4>

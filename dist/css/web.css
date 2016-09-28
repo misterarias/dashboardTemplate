@@ -179,7 +179,7 @@ h5.sub-header {
 }
 
 .summary tr .total_importe, .summary tr .total_items {
-    font-size: 16px;
+    /*font-size: 16px; */
     font-weight: bold;
     color: #008ac9;
     padding: 5px;
